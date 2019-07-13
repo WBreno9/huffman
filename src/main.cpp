@@ -6,6 +6,7 @@
 #include <queue>
 #include <map>
 #include <iterator>
+#include <bitset>
 
 struct HNode {
     bool isLeaf;
@@ -58,7 +59,28 @@ class HTree {
     std::unique_ptr<HNode> root_;
 };
 
-using HCode = std::vector<bool>;
+struct HCode {
+    uint32_t nBits_ = 0;
+    uint32_t codeb_ = 0;
+
+    inline void insert_1() {
+        uint32_t i = 1 << (31 - nBits_);
+        codeb_ |= i;
+        nBits_++;
+    }
+    inline void insert_0() {
+        nBits_++;
+    }
+
+    std::vector<bool> gv() {
+        std::vector<bool> o;
+        o.reserve(nBits_);
+        for (int64_t i = 0; i < nBits_; ++i)
+            o.push_back(((codeb_ & (1 << (31 - i))) ? true : false));
+        return o;
+    }
+};
+
 using HCodeMap = std::map<char, HCode>;
 
 void generateCodes(const std::unique_ptr<HNode>& node, const HCode& prefix,
@@ -67,27 +89,39 @@ void generateCodes(const std::unique_ptr<HNode>& node, const HCode& prefix,
         outCodes[node->byte] = prefix;
     } else {
         HCode leftPrefix = prefix;
-        leftPrefix.push_back(true);
+        leftPrefix.insert_1();
         generateCodes(node->left, leftPrefix, outCodes);
 
         HCode rightPrefix = prefix;
-        rightPrefix.push_back(false);
+        rightPrefix.insert_0();
         generateCodes(node->right, rightPrefix, outCodes);
     }
 }
 
-std::vector<bool> encode(HCodeMap& codes, const std::vector<char>& data) {
+std::vector<bool> encode(HCodeMap& codes, const std::vector<uint8_t>& data) {
     std::vector<bool> encoded;
 
     for (auto byte : data) {
-        encoded.insert(encoded.end(), codes[byte].begin(), codes[byte].end());
+        std::vector<bool> gv = codes[byte].gv();
+        encoded.insert(encoded.end(), gv.begin(), gv.end());
+    }
+
+    std::vector<uint8_t> out;
+
+    for (uint32_t i = 0; i < data.size(); ++i) {
+        uint8_t dbyte = data[i];
+        HCode code = codes[dbyte];
+
+        for (uint32_t j = 0; j < code.nBits_; ++j) {
+
+        }
     }
 
     return encoded;
 }
 
-std::vector<char> decode(const HTree& tree, const std::vector<bool>& data) {
-    std::vector<char> decoded;
+std::vector<uint8_t> decode(const HTree& tree, const std::vector<bool>& data) {
+    std::vector<uint8_t> decoded;
     HNode* n = tree.root_.get();
 
     auto it = data.begin();
@@ -109,44 +143,48 @@ std::vector<char> decode(const HTree& tree, const std::vector<bool>& data) {
 }
 
 int main(int argc, char** argv) {
-    std::string str = "this is an example for huffman encoding";
-
     if (argc != 2) std::exit(EXIT_FAILURE);
 
     std::ifstream input_file(argv[1]);
-    std::vector<char> data((std::istreambuf_iterator<char>(input_file)),
-                           (std::istreambuf_iterator<char>()));
+    std::vector<uint8_t> data((std::istreambuf_iterator<char>(input_file)),
+                              (std::istreambuf_iterator<char>()));
     input_file.close();
 
     std::array<uint32_t, CodeNum> freqs = {0};
 
-    for (auto c : data) ++freqs[static_cast<char>(c)];
+    for (auto c : data) ++freqs[c];
+    // for (uint32_t i = 0; i < CodeNum; ++i) std::cout << i << ": " << freqs[i]
+    // << "\n";
 
     HTree tree(freqs);
 
     HCodeMap codes;
     generateCodes(tree.root_, HCode(), codes);
 
-    // for (HCodeMap::const_iterator it = codes.begin(); it != codes.end();
-    // ++it) {
-    //     std::cout << it->first << " ";
-    //     std::copy(it->second.begin(), it->second.end(),
-    //               std::ostream_iterator<bool>(std::cout));
-    //     std::cout << std::endl;
-    // }
+    for (auto& c : codes) {
+        c.second.gv();
+    }
+
+    //  for (HCodeMap::const_iterator it = codes.begin(); it != codes.end();
+    //  ++it) {
+    //      std::cout << static_cast<uint32_t>(it->first) << " ";
+    //      std::copy(it->second.begin(), it->second.end(),
+    //                std::ostream_iterator<bool>(std::cout));
+    //      std::cout << std::endl;
+    //  }
 
     // std::vector<char> data(str.begin(), str.end());
     std::vector<bool> encoded = encode(codes, data);
     // for (auto bit : encoded) std::cout << bit;
     // std::cout << std::endl;
 
-    std::vector<char> decoded = decode(tree, encoded);
+    std::vector<uint8_t> decoded = decode(tree, encoded);
     // for (auto byte : decoded) std::cout << static_cast<char>(byte);
     // std::cout << std::endl;
 
-	std::ofstream output_file("out.huff");
-	for (auto c : decoded) output_file << c;
-	output_file.close();
+    std::ofstream output_file("out.huff");
+    for (auto c : decoded) output_file << c;
+    output_file.close();
 
     std::exit(EXIT_SUCCESS);
 }
