@@ -68,9 +68,7 @@ struct HCode {
         codeb_ |= i;
         nBits_++;
     }
-    inline void insert_0() {
-        nBits_++;
-    }
+    inline void insert_0() { nBits_++; }
 
     std::vector<bool> gv() {
         std::vector<bool> o;
@@ -98,46 +96,56 @@ void generateCodes(const std::unique_ptr<HNode>& node, const HCode& prefix,
     }
 }
 
-std::vector<bool> encode(HCodeMap& codes, const std::vector<uint8_t>& data) {
-    std::vector<bool> encoded;
+std::vector<uint8_t> encode(HCodeMap& codes, const std::vector<uint8_t>& data) {
+    std::vector<uint8_t> encoded;
 
-    for (auto byte : data) {
-        std::vector<bool> gv = codes[byte].gv();
-        encoded.insert(encoded.end(), gv.begin(), gv.end());
-    }
-
-    std::vector<uint8_t> out;
-
+    uint8_t byte = 0, bcounter = 0;
     for (uint32_t i = 0; i < data.size(); ++i) {
-        uint8_t dbyte = data[i];
-        HCode code = codes[dbyte];
-
+        HCode code = codes[data[i]];
         for (uint32_t j = 0; j < code.nBits_; ++j) {
+            bool bl = (code.codeb_ & (1 << (31 - j)));
+            byte |= bl << (7 - bcounter);
 
+            if (bcounter == 7) {
+                bcounter = 0;
+                encoded.push_back(byte);
+                byte = 0;
+            } else {
+                bcounter++;
+            }
         }
     }
+    encoded.push_back(byte);
 
     return encoded;
 }
 
-std::vector<uint8_t> decode(const HTree& tree, const std::vector<bool>& data) {
+std::vector<uint8_t> decode(const HTree& tree,
+                            const std::vector<uint8_t>& data) {
     std::vector<uint8_t> decoded;
     HNode* n = tree.root_.get();
 
+    uint8_t bcounter = 0;
     auto it = data.begin();
     while (it != data.end()) {
         if (n->isLeaf) {
             decoded.push_back(n->byte);
             n = tree.root_.get();
         } else {
-            if (*it)
+            if (*it & (1 << (7 - bcounter)))
                 n = n->left.get();
             else
                 n = n->right.get();
-            ++it;
+
+            if (bcounter == 7) {
+                bcounter = 0;
+                ++it;
+            } else {
+                bcounter++;
+            }
         }
     }
-	decoded.push_back(n->byte);
+    decoded.push_back(n->byte);
 
     return decoded;
 }
@@ -153,34 +161,14 @@ int main(int argc, char** argv) {
     std::array<uint32_t, CodeNum> freqs = {0};
 
     for (auto c : data) ++freqs[c];
-    // for (uint32_t i = 0; i < CodeNum; ++i) std::cout << i << ": " << freqs[i]
-    // << "\n";
 
     HTree tree(freqs);
 
     HCodeMap codes;
     generateCodes(tree.root_, HCode(), codes);
 
-    for (auto& c : codes) {
-        c.second.gv();
-    }
-
-    //  for (HCodeMap::const_iterator it = codes.begin(); it != codes.end();
-    //  ++it) {
-    //      std::cout << static_cast<uint32_t>(it->first) << " ";
-    //      std::copy(it->second.begin(), it->second.end(),
-    //                std::ostream_iterator<bool>(std::cout));
-    //      std::cout << std::endl;
-    //  }
-
-    // std::vector<char> data(str.begin(), str.end());
-    std::vector<bool> encoded = encode(codes, data);
-    // for (auto bit : encoded) std::cout << bit;
-    // std::cout << std::endl;
-
+    std::vector<uint8_t> encoded = encode(codes, data);
     std::vector<uint8_t> decoded = decode(tree, encoded);
-    // for (auto byte : decoded) std::cout << static_cast<char>(byte);
-    // std::cout << std::endl;
 
     std::ofstream output_file("out.huff");
     for (auto c : decoded) output_file << c;
