@@ -69,14 +69,6 @@ struct HCode {
         nBits_++;
     }
     inline void insert_0() { nBits_++; }
-
-    std::vector<bool> gv() {
-        std::vector<bool> o;
-        o.reserve(nBits_);
-        for (int64_t i = 0; i < nBits_; ++i)
-            o.push_back(((codeb_ & (1 << (31 - i))) ? true : false));
-        return o;
-    }
 };
 
 using HCodeMap = std::map<char, HCode>;
