@@ -9,6 +9,7 @@
 #include <bitset>
 
 struct HNode {
+	uint32_t id;
     bool isLeaf;
     char byte;
     uint32_t freq;
@@ -20,6 +21,108 @@ struct HNode {
         : isLeaf(isLeaf), byte(byte), freq(freq) {}
     HNode(bool isLeaf, uint32_t freq, HNode* left, HNode* right)
         : isLeaf(isLeaf), byte(0), freq(freq), left(left), right(right) {}
+};
+
+class MinHeap {
+   public:
+    MinHeap(const std::vector<HNode>& nodes_) : nodes(nodes_) {
+        pos.resize(nodes.size());
+        uint32_t k = 0;
+        for (auto& p : pos) p = k++;
+
+        size = nodes.size();
+
+        uint32_t j = (size / 2.0f) - 1;
+        for (uint32_t i = j + 1; i != 0; --i) heapify(i - 1);
+    }
+
+    HNode extract() {
+        HNode extracted = nodes[0];
+
+        pos[nodes[size - 1].id] = 0;
+        pos[extracted.id] = size - 1;
+
+        std::swap(nodes[0], nodes[size - 1]);
+        --size;
+
+        heapify(0);
+        return extracted;
+    }
+
+    void heapify(uint32_t index) {
+        uint32_t t = index;
+
+        while (true) {
+            uint32_t l = left_child(t);
+            uint32_t r = right_child(t);
+
+            if ((l < size) && (nodes[t].freq > nodes[l].freq)) t = l;
+            if ((r < size) && (nodes[t].freq > nodes[r].freq)) t = r;
+
+            if (t != index) {
+                pos[nodes[t].id] = index;
+                pos[nodes[index].id] = t;
+
+                std::swap(nodes[index], nodes[t]);
+                index = t;
+            } else {
+                break;
+            }
+        }
+    }
+
+    bool decrement(uint32_t id, uint32_t freq) {
+        uint32_t index = pos[id];
+
+        if ((index >= size) || (nodes[index].freq < freq)) return false;
+
+        nodes[index].freq = freq;
+
+        while (index && (nodes[index].freq < nodes[parent(index)].freq)) {
+            pos[nodes[index].id] = parent(index);
+            pos[nodes[parent(index)].id] = index;
+
+            uint32_t p_id = nodes[parent(index)].id;
+
+            std::swap(nodes[index], nodes[parent(index)]);
+
+            index = pos[p_id];
+        }
+    
+        return true;
+    }
+    
+    void insert(HNode& node) 
+		node.id = nodes.size() - 1;
+		pos.push_back(node.id);
+        nodes.push_back(node);
+
+		uint32_t index = nodes.size() - 1;
+        while (index && (nodes[index].freq < nodes[parent(index)].freq)) {
+            pos[nodes[index].id] = parent(index);
+            pos[nodes[parent(index)].id] = index;
+
+            uint32_t p_id = nodes[parent(index)].id;
+
+            std::swap(nodes[index], nodes[parent(index)]);
+            index = pos[p_id];
+        }
+    }
+
+    std::vector<HNode> get_nodes() const {
+        return std::vector<HNode>(nodes.begin(), (nodes.begin() + size));
+    }
+    bool is_empty() const { return size == 0; }
+
+   private:
+    std::vector<uint32_t> pos;
+    std::vector<HNode> nodes;
+
+    uint32_t size;
+
+    uint32_t parent(uint32_t index) const { return index / 2.0f; }
+    uint32_t left_child(uint32_t index) const { return 2 * index + 1; }
+    uint32_t right_child(uint32_t index) const { return 2 * index + 2; }
 };
 
 struct HNodeCmp {
@@ -35,11 +138,14 @@ class HTree {
     HTree(const std::array<uint32_t, CodeNum>& freqs) { root_ = build(freqs); }
 
     std::unique_ptr<HNode> build(const std::array<uint32_t, CodeNum>& freqs) {
-        std::priority_queue<HNode*, std::vector<HNode*>, HNodeCmp> tree;
+        // std::priority_queue<HNode*, std::vector<HNode*>, HNodeCmp> tree;
+		HeapMin heap;		
 
         for (uint32_t i = 0; i < CodeNum; ++i) {
-            if (freqs[i])
-                tree.push(new HNode(true, static_cast<char>(i), freqs[i]));
+            if (freqs[i]) {
+				heap.insert(new HNode(true, static_cast<char>(i), freqs[i]));
+                // tree.push(new HNode(true, static_cast<char>(i), freqs[i]));
+			}
         }
 
         while (tree.size() > 1) {
