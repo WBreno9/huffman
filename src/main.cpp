@@ -118,10 +118,6 @@ class MinHeap {
     uint32_t right_child(uint32_t index) const { return 2 * index + 2; }
 };
 
-struct HNodeCmp {
-    bool operator()(const HNode* lhs, const HNode* rhs) { return (lhs->freq > rhs->freq); }
-};
-
 constexpr uint32_t CodeNum = 256;
 
 class HTree {
