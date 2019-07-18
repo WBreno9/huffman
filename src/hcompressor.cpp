@@ -63,6 +63,7 @@ void HCompressor::compress_file_write(const std::string& file_path, const std::s
     std::ofstream fs(write_file_path);
     fs.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
+
 void HCompressor::uncompress_file_write(const std::string& file_path, const std::string& write_file_path) {
     auto data = uncompress_file(file_path);
     std::ofstream fs(write_file_path);
@@ -102,7 +103,7 @@ std::vector<uint8_t> HCompressor::encode(HCodeMap& codes, const std::vector<uint
             }
         }
     }
-    encoded.push_back(byte);
+    if (byte) encoded.push_back(byte);
 
     return encoded;
 }
@@ -131,7 +132,7 @@ std::vector<uint8_t>HCompressor::decode(const HTree& tree, const std::vector<uin
             }
         }
     }
-    decoded.push_back(n->byte);
+    if (n->isLeaf) decoded.push_back(n->byte);
 
     return decoded;
 }

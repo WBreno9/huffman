@@ -22,10 +22,6 @@ struct HNode {
         : isLeaf(isLeaf), byte(0), freq(freq), left(left), right(right) {}
 };
 
-struct HNodeCmp {
-    bool operator()(const HNode* lhs, const HNode* rhs) { return (lhs->freq > rhs->freq); }
-};
-
 constexpr uint32_t CodeNum = 256;
 
 class HTree {
