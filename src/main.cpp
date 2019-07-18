@@ -1,14 +1,5 @@
-#include <array>
-#include <bitset>
-#include <fstream>
 #include <iostream>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <vector>
 
-#include "heap.h"
-#include "htree.h"
 #include "hcompressor.h"
 
 int main(int argc, char** argv) {
