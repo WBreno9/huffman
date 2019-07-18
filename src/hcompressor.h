@@ -15,14 +15,14 @@ class HCompressor {
     HCompressor();
     ~HCompressor();
 
-    std::vector<uint8_t> compress_data(const std::vector<uint8_t>& data);
-    std::vector<uint8_t> uncompress_data(const std::vector<uint8_t>& data);
+    std::vector<uint8_t> compressData(const std::vector<uint8_t>& data);
+    std::vector<uint8_t> uncompressData(const std::vector<uint8_t>& data);
 
-    std::vector<uint8_t> compress_file(const std::string& file_path);
-    std::vector<uint8_t> uncompress_file(const std::string& file_path);
+    std::vector<uint8_t> compressFile(const std::string& file_path);
+    std::vector<uint8_t> uncompressFile(const std::string& file_path);
 
-    void compress_file_write(const std::string& file_path, const std::string& write_file_path);
-    void uncompress_file_write(const std::string& file_path, const std::string& write_file_path);
+    void compressFileWrite(const std::string& file_path, const std::string& write_file_path);
+    void uncompressFileWrite(const std::string& file_path, const std::string& write_file_path);
 
    private:
     struct HCode {
