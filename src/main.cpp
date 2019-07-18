@@ -31,12 +31,19 @@ class MinHeap {
     MinHeap(const std::vector<HeapNode>& nodes) : nodes_(nodes) {
         size_ = nodes_.size();
 
+        uint32_t k = 0;
+        for (auto& p : pos_)
+            p = k++;
+
         uint32_t j = (size_ / 2.0f) - 1;
         for (uint32_t i = j + 1; i != 0; --i) heapify(i - 1);
     }
 
     HNode* extract() {
         HeapNode extracted = nodes_[0];
+
+        pos_[nodes_[size_ - 1].id] = 0;
+        pos_[extracted.id] = size_ - 1;
 
         std::swap(nodes_[0] ,nodes_[size_ - 1]);
         --size_;
@@ -58,6 +65,8 @@ class MinHeap {
             if ((l < size_) && (nodes_[t].n->freq > nodes_[l].n->freq)) t = l;
 
             if (t != index) {
+                pos_[nodes_[t].id] = index;
+                pos_[nodes_[index].id] = t;
                 std::swap(nodes_[t], nodes_[index]);
                 index = t;
             } else {
@@ -69,20 +78,28 @@ class MinHeap {
     void insert(HNode* v) {
         HeapNode n;
         n.n = v;
-        n.id = size_ - 1;
+        n.id = size_;
 
         size_++;
         if (size_ < nodes_.size()) {
             nodes_[size_ - 1] = n;
+            pos_[size_ - 1] = size_ - 1;
         } else {
             nodes_.push_back(n);
+            pos_.push_back(size_ - 1);
         }
 
         uint32_t i = size_ - 1;
 
         while (i != 0 && (nodes_[parent(i)].n->freq > nodes_[i].n->freq)) {
+            pos_[nodes_[i].id] = parent(i);
+            pos_[nodes_[parent(i)].id] = i;
+
+            uint32_t p_id = nodes_[parent(i)].id;
+
             std::swap(nodes_[i], nodes_[parent(i)]);
-            i = parent(i);
+
+            i = pos_[p_id];
         }
     }
 
@@ -91,6 +108,7 @@ class MinHeap {
     uint32_t size() const { return size_; }
 
    private:
+    std::vector<uint32_t> pos_;
     std::vector<HeapNode> nodes_;
 
     uint32_t size_;
