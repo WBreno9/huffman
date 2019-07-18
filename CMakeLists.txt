@@ -4,6 +4,8 @@ project(huffman)
 set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCES
+	src/hcompressor.cpp
+	src/htree.cpp
 	src/main.cpp
 	)
 
