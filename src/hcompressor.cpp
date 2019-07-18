@@ -59,13 +59,13 @@ std::vector<uint8_t> HCompressor::uncompressFile(const std::string& file_path) {
 }
 
 void HCompressor::compressFileWrite(const std::string& file_path, const std::string& write_file_path) {
-    auto data = compress_file(file_path);
+    auto data = compressFile(file_path);
     std::ofstream fs(write_file_path);
     fs.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
 
 void HCompressor::uncompressFileWrite(const std::string& file_path, const std::string& write_file_path) {
-    auto data = uncompress_file(file_path);
+    auto data = uncompressFile(file_path);
     std::ofstream fs(write_file_path);
     fs.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
